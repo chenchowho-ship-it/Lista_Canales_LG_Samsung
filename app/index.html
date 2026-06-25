@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Generador de listas de canales para Samsung LYNK Cloud y LG ProCentric Direct. Crea, edita y exporta archivos .json y .xml para tu plataforma hotelera.">
+  <title>Channel List Generator — LYNK Cloud & ProCentric</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="brand-samsung">
+
+  <div class="app">
+
+    <!-- ═══ Header ═══ -->
+    <header class="header">
+      <div class="header__brand">
+        <div class="header__logo">S</div>
+        <div>
+          <h1 class="header__title">Channel List Generator</h1>
+          <p class="header__subtitle" id="header-subtitle">Genera listas de canales para LYNK Cloud & ProCentric</p>
+        </div>
+      </div>
+
+      <div class="platform-switcher">
+        <button class="platform-switcher__btn active" data-platform="samsung">
+          <span class="icon">📺</span> Samsung LYNK Cloud
+        </button>
+        <button class="platform-switcher__btn" data-platform="lg">
+          <span class="icon">🖥️</span> LG ProCentric Direct
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══ Toolbar ═══ -->
+    <div class="toolbar">
+      <div class="toolbar__left">
+        <div class="type-tabs">
+          <button class="type-tabs__btn active" data-type="IP">📡 IPTV</button>
+          <button class="type-tabs__btn" data-type="RF">📻 RF / Cable</button>
+        </div>
+
+        <div class="channel-count">
+          Canales: <span class="channel-count__number" id="channel-count">0</span>
+        </div>
+      </div>
+
+      <div class="toolbar__right">
+        <button class="btn btn--primary" id="btn-add-channel">
+          <span class="icon">➕</span> Agregar Canal
+        </button>
+        <button class="btn" id="btn-import-file">
+          <span class="icon">📂</span> Importar Archivo
+        </button>
+        <button class="btn" id="btn-import-csv">
+          <span class="icon">📄</span> Importar CSV / Excel
+        </button>
+        <button class="btn btn--secondary" id="btn-download-template" style="margin-right: 8px;">
+          <span class="icon">📥</span> Excel Template
+        </button>
+        <button class="btn btn--warning" id="btn-batch-edit" style="opacity:0.4" disabled>
+          <span class="icon">✏️</span> Edición Masiva
+        </button>
+        <button class="btn btn--danger" id="btn-delete-selected" style="opacity:0.4" disabled>
+          <span class="icon">🗑️</span> Eliminar
+        </button>
+        <button class="btn btn--secondary" id="btn-audit">
+          <span class="icon">🔍</span> Auditar
+        </button>
+        <button class="btn btn--success" id="btn-export">
+          <span class="icon">💾</span> Exportar JSON/XML
+        </button>
+      </div>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="file-input" accept=".json,.xml" style="display:none">
+
+    <!-- ═══ Main Table ═══ -->
+    <div class="table-card">
+      <div class="table-wrapper" id="table-wrapper">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- ═══ Status Bar ═══ -->
+    <div class="status-bar">
+      <div class="status-bar__platform">
+        <span class="status-bar__dot"></span>
+        <span id="status-platform">Samsung LYNK Cloud</span>
+      </div>
+      <div>
+        Tipo: <strong id="status-type">IPTV</strong> &nbsp;|&nbsp;
+        Formato: <strong id="status-format">.json</strong>
+      </div>
+    </div>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="app-footer">
+      <p>Aplicación desarrollada sin fines de lucro. Creado por <strong>Cristian Gonzalez A.</strong></p>
+      <p class="app-footer__disclaimer">Esta herramienta no tiene afiliación oficial con las marcas Samsung y LG.</p>
+    </footer>
+
+  </div><!-- /.app -->
+
+  <!-- ═══ Modal: Add Channel ═══ -->
+  <div class="modal-overlay" id="modal-add-overlay">
+    <div class="modal" id="modal-add">
+      <div class="modal__header">
+        <h2 class="modal__title">Agregar Canal</h2>
+        <button class="modal__close" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <!-- Rendered dynamically by JS -->
+      </div>
+      <div class="modal__footer">
+        <button class="btn" onclick="document.getElementById('modal-add-overlay').classList.remove('active')">Cancelar</button>
+        <button class="btn btn--primary" id="btn-confirm-add">
+          <span class="icon">➕</span> Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal: CSV Import ═══ -->
+  <div class="modal-overlay" id="modal-csv-overlay">
+    <div class="modal" id="modal-csv" style="max-width:780px">
+      <div class="modal__header">
+        <h2 class="modal__title">Importar desde CSV / Excel</h2>
+        <button class="modal__close" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <!-- Rendered dynamically by JS -->
+      </div>
+      <div class="modal__footer">
+        <button class="btn" onclick="document.getElementById('modal-csv-overlay').classList.remove('active')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal: Batch Edit ═══ -->
+  <div class="modal-overlay" id="modal-batch-overlay">
+    <div class="modal" id="modal-batch">
+      <div class="modal__header">
+        <h2 class="modal__title">Edición Masiva</h2>
+        <button class="modal__close" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <!-- Rendered dynamically by JS -->
+      </div>
+      <div class="modal__footer">
+        <button class="btn" onclick="document.getElementById('modal-batch-overlay').classList.remove('active')">Cancelar</button>
+        <button class="btn btn--warning" id="btn-confirm-batch">Aplicar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal: Export Options ═══ -->
+  <div class="modal-overlay" id="modal-export-overlay">
+    <div class="modal" id="modal-export" style="max-width: 450px;">
+      <div class="modal__header">
+        <h2 class="modal__title">Opciones de Exportación</h2>
+        <button class="modal__close" onclick="document.getElementById('modal-export-overlay').classList.remove('active')">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="form-group" id="export-filename-group" style="display:none; margin-bottom:15px;">
+          <label class="form-label" for="export-filename">Nombre del Archivo:</label>
+          <div class="input-group">
+            <span class="input-group__addon input-group__addon--left">📄</span>
+            <input type="text" id="export-filename" class="form-control form-input" value="GlobalChannelMap_Custom">
+            <span class="input-group__addon">.xml</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Qué canales deseas incluir?</label>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+            <label><input type="radio" name="export-mode" value="current" checked> <span id="export-current-label">Solo la pestaña actual</span></label>
+            <label><input type="radio" name="export-mode" value="both"> Unificar IPTV y RF / Cable en un solo archivo</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn" onclick="document.getElementById('modal-export-overlay').classList.remove('active')">Cancelar</button>
+        <button class="btn btn--success" id="btn-confirm-export">
+          <span class="icon">💾</span> Descargar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Modal: Audit ═══ -->
+  <div class="modal-overlay" id="modal-audit-overlay">
+    <div class="modal" id="modal-audit" style="max-width: 600px">
+      <div class="modal__header">
+        <h2 class="modal__title">Auditoría de Canales</h2>
+        <button class="modal__close" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <!-- Rendered dynamically by JS -->
+      </div>
+      <div class="modal__footer">
+        <button class="btn" onclick="document.getElementById('modal-audit-overlay').classList.remove('active')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Toast Container ═══ -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ═══ Scripts ═══ -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/samsung-generator.js"></script>
+  <script src="js/lg-generator.js"></script>
+  <script src="js/csv-importer.js"></script>
+  <script src="js/file-importer.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
